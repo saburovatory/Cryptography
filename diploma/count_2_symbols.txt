@@ -1,0 +1,161 @@
+ A 2
+ B 3
+ G 1
+ I 2
+ L 1
+ P 1
+ a 8
+ b 2
+ c 1
+ d 6
+ e 1
+ f 4
+ h 5
+ i 4
+ j 1
+ l 2
+ m 6
+ n 5
+ o 1
+ p 1
+ r 1
+ s 4
+ t 11
+ w 5
+ y 9
+Ah 1
+An 2
+Bu 3
+Ge 1
+I  5
+Lu 1
+Pr 1
+a  2
+ai 1
+al 3
+am 2
+an 5
+ap 1
+ar 5
+as 1
+at 4
+av 3
+be 1
+by 1
+ca 2
+cc 1
+ce 1
+ch 2
+d  8
+de 1
+do 5
+e  14
+eI 1
+ea 2
+ed 2
+ee 1
+ef 1
+el 5
+en 4
+er 3
+es 4
+et 1
+ev 1
+ew 1
+f  4
+fa 3
+fe 1
+fr 2
+fu 1
+g  1
+ge 2
+gh 1
+h  2
+ha 4
+he 4
+hf 1
+hi 2
+ho 2
+hr 2
+ht 1
+ic 2
+ie 3
+if 2
+ig 1
+il 3
+in 3
+is 4
+it 3
+ju 1
+l  8
+la 1
+lf 1
+li 1
+ll 8
+lo 2
+ly 2
+me 3
+mi 2
+mo 1
+my 2
+n  2
+na 1
+nc 1
+nd 6
+ne 2
+nf 1
+ng 3
+no 5
+ns 1
+nt 3
+o  8
+oa 1
+of 1
+on 4
+or 3
+ot 1
+ou 9
+ow 3
+pa 1
+pe 2
+r  3
+ra 1
+re 4
+ri 5
+rn 1
+ro 1
+rp 1
+rr 1
+rs 2
+rt 1
+ry 1
+s  8
+se 2
+si 1
+sl 1
+so 1
+st 5
+t  7
+tI 2
+ta 1
+te 6
+th 9
+ti 3
+to 2
+tr 2
+u  7
+uc 1
+ul 1
+uo 1
+ur 1
+us 2
+ut 2
+ve 4
+w  2
+wa 2
+we 1
+wi 2
+wn 1
+ws 1
+y  6
+yo 9
