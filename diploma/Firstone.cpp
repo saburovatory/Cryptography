@@ -2,6 +2,8 @@
 #include <iostream> 
 #include <map> 
 #include <bitset>
+#include <locale.h>
+#include <time.h>
 
 using namespace std;
 
@@ -33,8 +35,13 @@ int LFSR(void)
 	return S & 0x00000001;
 }
 
+void create_gystogram(map<char, int> map) {
+
+}
+
 int main()
 {
+	setlocale(0, "RUS");
 	ifstream f_input;
 	ofstream f_letters, f_count1, f_count2, f_crypt_byte, f_decrypt, f_key, f_crypt, f_letters_byte;
 
@@ -51,6 +58,9 @@ int main()
 	char symbol;
 	int symbols_count = 0;
 	bitset<8> symbol_byte;
+	long start = clock();
+	cout << "Удаление лишних символов и преобразование в двоичную систему: ";
+
 	while ((symbol = f_input.get()) != -1)
 		if (symbol <= 'Z' && symbol >= 'A' || symbol <= 'z' && symbol >= 'a' || symbol == ' ')
 		{
@@ -59,6 +69,8 @@ int main()
 			f_letters_byte << symbol_byte;
 			f_letters << symbol;
 		}
+	long finish = clock();
+	cout << (finish - start) / 1000.0 << " c" << endl;
 
 	symbols_count *= 8;
 
@@ -72,6 +84,9 @@ int main()
 	map<char, int> mp1;
 	map<char*, int, cmp_str> mp2;
 
+	cout << "Подсчет одиночных и парных символов: ";
+	start = clock();
+
 	while (ifs.get(symbol1) && ifs.get(symbol2))
 	{
 		char *sec = (char *)malloc(3);
@@ -82,6 +97,9 @@ int main()
 		mp1[symbol1]++;
 		mp2[sec]++;
 	}
+	finish = clock();
+	cout << (finish - start) / 1000.0 << " c" << endl;
+	create_gystogram(mp1);
 
 	for (map<char, int>::iterator p = mp1.begin(); p != mp1.end(); ++p) // проходим по всем элементам 
 		f_count1<<p->first <<':'<<p->second <<endl;
@@ -100,6 +118,9 @@ int main()
 
 	char s[8];
 
+	cout << "Создание ключа и шифрование: ";
+	start = clock();
+
 	for (int i = 1; i <= symbols_count; i++) {
 		int byte = LFSR(), symbol = ifs.get();
 		f_key << byte;
@@ -112,6 +133,8 @@ int main()
 			f_crypt << (char)symbol;
 		}
 	}
+	finish = clock();
+	cout << (finish - start) / 1000.0 << " c" << endl;
 
 	ifs.close();
 	f_crypt_byte.close();
@@ -119,6 +142,8 @@ int main()
 
 	ifstream inf_1(INPUT_CRYPT_BYTE), inf_2(KEY);
 	
+	cout << "Дешифрование: ";
+	start = clock();
 	for (int i = 1; i <= symbols_count; i++) {
 		s[7 - ((i-1) % 8)] = ((inf_2.get() - '0') ^ (inf_1.get() - '0'));
 		if (i % 8 == 0) {
@@ -129,6 +154,8 @@ int main()
 			f_decrypt << (char)symbol;
 		}
 	}
+	finish = clock();
+	cout << (finish - start) / 1000.0 << " c" << endl;
 	f_decrypt.close();
 	inf_1.close();
 	inf_2.close();
