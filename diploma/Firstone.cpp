@@ -4,6 +4,8 @@
 #include <bitset>
 #include <locale.h>
 #include <time.h>
+#include <cstring>
+#include <cmath>
 
 using namespace std;
 
@@ -41,7 +43,8 @@ void create_gystogram(map<char, int> map) {
 
 int main()
 {
-	setlocale(0, "RUS");
+    setlocale(0, "RUS");
+
 	ifstream f_input;
 	ofstream f_letters, f_count1, f_count2, f_crypt_byte, f_decrypt, f_key, f_crypt, f_letters_byte;
 
@@ -59,7 +62,7 @@ int main()
 	int symbols_count = 0;
 	bitset<8> symbol_byte;
 	long start = clock();
-	cout << "Удаление лишних символов и преобразование в двоичную систему: ";
+    cout << "Удаление лишних символов и преобразование в двоичную систему: ";
 
 	while ((symbol = f_input.get()) != -1)
 		if (symbol <= 'Z' && symbol >= 'A' || symbol <= 'z' && symbol >= 'a' || symbol == ' ')
@@ -87,9 +90,10 @@ int main()
 	cout << "Подсчет одиночных и парных символов: ";
 	start = clock();
 
+    char sec[3];
 	while (ifs.get(symbol1) && ifs.get(symbol2))
 	{
-		char *sec = (char *)malloc(3);
+        //char *sec = (char *)malloc(3);
 		sec[0] = symbol1;
 		sec[1] = symbol2;
 		sec[2] = 0;

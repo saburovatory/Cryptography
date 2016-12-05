@@ -303,4 +303,4 @@ $RECYCLE.BIN/
 *.lnk
 
 # txt files
-*.txt
+#*.txt
