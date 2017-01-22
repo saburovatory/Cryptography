@@ -23,6 +23,8 @@ using namespace std;
 
 #pragma endregion
 
+const int BIT_COUNT = 5;
+
 struct cmp_str
 {
 	bool operator()(char const *a, char const *b) const
@@ -52,16 +54,22 @@ int removing_symbols() {
 
 	char symbol;
 	int symbols_count = 0;
-	bitset<8> symbol_byte;
-	while ((symbol = f_input.get()) != -1)
-		if (symbol <= 'Z' && symbol >= 'A' || symbol <= 'z' && symbol >= 'a' || symbol == ' ')
+	bitset<BIT_COUNT> symbol_byte;
+	while ((symbol = tolower(f_input.get())) != -1)
+		if (symbol <= 'z' && symbol >= 'a' || symbol == ' ')
 		{
-			symbol_byte = bitset<8>(symbol);
+			f_letters << symbol;
+
+			if (symbol == ' ')
+				symbol -= 32;
+			else
+				symbol -= 96;
+
+			symbol_byte = bitset<BIT_COUNT>(symbol);
 			symbols_count++;
 			f_letters_byte << symbol_byte;
-			f_letters << symbol;
 		}
-	symbols_count *= 8;
+	symbols_count *= BIT_COUNT;
 
 	f_input.close();
 	f_letters.close();
@@ -107,7 +115,7 @@ void counting_symbols() {
 void encryption(int symbols_count) {
 	ifstream f_letters_byte;
 	ofstream f_crypt_byte, f_key, f_crypt;
-	char s[8];
+	char s[BIT_COUNT];
 
 	f_letters_byte.open(LETTERS_BYTE);
 	f_crypt.open(INPUT_CRYPT);
@@ -121,9 +129,9 @@ void encryption(int symbols_count) {
 		int byte = LFSR(), symbol = f_letters_byte.get();
 		f_key << byte;
 		f_crypt_byte << (byte ^ (symbol - '0'));
-		s[7 - ((i - 1) % 8)] = (byte ^ (symbol - '0'));
-		if (i % 8 == 0) {
-			for (int j = 7; j >= 0; j--) {
+		s[BIT_COUNT - 1 - ((i - 1) % BIT_COUNT)] = (byte ^ (symbol - '0'));
+		if (i % BIT_COUNT == 0) {
+			for (int j = BIT_COUNT - 1; j >= 0; j--) {
 				symbol += (int)s[j] * pow(2, j);
 			}
 			f_crypt << (char)symbol;
@@ -139,19 +147,24 @@ void encryption(int symbols_count) {
 void decryption(int symbols_count) {
 	ofstream f_decrypt;
 	ifstream input_crypt_byte, key;
-	char s[8];
+	char s[BIT_COUNT];
 
 	f_decrypt.open(INPUT_DECRYPT);
 	input_crypt_byte.open(INPUT_CRYPT_BYTE);
 	key.open(KEY);
 
 	for (int i = 1; i <= symbols_count; i++) {
-		s[7 - ((i - 1) % 8)] = ((key.get() - '0') ^ (input_crypt_byte.get() - '0'));
-		if (i % 8 == 0) {
+		s[BIT_COUNT - 1 - ((i - 1) % BIT_COUNT)] = ((key.get() - '0') ^ (input_crypt_byte.get() - '0'));
+		if (i % BIT_COUNT == 0) {
 			int symbol = 0;
-			for (int j = 7; j >= 0; j--) {
+			for (int j = BIT_COUNT - 1; j >= 0; j--) {
 				symbol += (int)s[j] * pow(2, j);
 			}
+
+			if (symbol == 0)
+				symbol += 32;
+			else
+				symbol += 96;
 			f_decrypt << (char)symbol;
 		}
 	}
