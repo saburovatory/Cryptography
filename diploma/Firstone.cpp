@@ -33,7 +33,7 @@ struct cmp_str
 	}
 };
 
-//РСЛОС регистр сдвига с линейной обратной связью 
+//ГђГ‘Г‹ГЋГ‘ Г°ГҐГЈГЁГ±ГІГ° Г±Г¤ГўГЁГЈГ  Г± Г«ГЁГ­ГҐГ©Г­Г®Г© Г®ГЎГ°Г ГІГ­Г®Г© Г±ГўГїГ§ГјГѕ 
 int LFSR(void)
 {
 	//static unsigned long S = 0x00000001;
@@ -90,9 +90,10 @@ void counting_symbols() {
 	map<char, int> mp1;
 	map<char*, int, cmp_str> mp2;
 
-	char sec[3];
+	char *sec;
 	while (f_letters.get(symbol1) && f_letters.get(symbol2))
 	{
+		sec = new char[3];
 		sec[0] = symbol1;
 		sec[1] = symbol2;
 		sec[2] = 0;
@@ -101,7 +102,7 @@ void counting_symbols() {
 		mp2[sec]++;
 	}
 
-	for (map<char, int>::iterator p = mp1.begin(); p != mp1.end(); ++p) // проходим по всем элементам 
+	for (map<char, int>::iterator p = mp1.begin(); p != mp1.end(); ++p) // ГЇГ°Г®ГµГ®Г¤ГЁГ¬ ГЇГ® ГўГ±ГҐГ¬ ГЅГ«ГҐГ¬ГҐГ­ГІГ Г¬ 
 		f_count1 << p->first << ':' << p->second << endl;
 	
 	for (map<char*, int>::iterator p1 = mp2.begin(); p1 != mp2.end(); ++p1)
