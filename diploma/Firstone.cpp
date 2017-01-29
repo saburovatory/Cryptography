@@ -33,7 +33,7 @@ struct cmp_str
 	}
 };
 
-//ÐÑËÎÑ ðåãèñòð ñäâèãà ñ ëèíåéíîé îáðàòíîé ñâÿçüþ 
+//РСЛОС регистр сдвига с линейной обратной связью 
 int LFSR(void)
 {
 	//static unsigned long S = 0x00000001;
@@ -44,6 +44,59 @@ int LFSR(void)
 	return S & 0x00000001;
 }
 
+int transform_symbol(int symbol, bool direction = true)
+{
+	if (direction) {
+		if (symbol == ' ')
+			symbol -= 32;  //0
+		else
+			if (symbol >= 'a' && symbol <= 'z')
+				symbol -= 96; //1-26
+			else
+				if (symbol == '.')
+					symbol -= 19; //27
+				else
+					if (symbol == ',')
+						symbol -= 16; //28
+					else
+						if (symbol == '!')
+							symbol -= 4; //29
+						else
+							if (symbol == '?')
+								symbol -= 33; //30
+							else
+								if (symbol == '"')
+									symbol -= 3; //31
+								else
+									symbol = -1;
+	} else {
+		if (symbol == 0)
+			symbol += 32;
+		else
+			if (symbol >= 1 && symbol <= 26)
+				symbol += 96;
+			else
+				if (symbol == 27)
+					symbol += 19;
+				else
+					if (symbol == 28)
+						symbol += 16;
+					else
+						if (symbol == 29)
+							symbol += 4;
+						else
+							if (symbol == 30)
+								symbol += 33;
+							else
+								if (symbol == 31)
+									symbol += 3;
+								else
+									symbol = -1;
+	}
+
+	return symbol;
+}
+
 int removing_symbols() {
 	ifstream f_input;
 	ofstream f_letters, f_letters_byte;
@@ -52,23 +105,20 @@ int removing_symbols() {
 	f_letters_byte.open(LETTERS_BYTE);
 	f_letters.open(LETTERS);
 
-	char symbol;
+	char symbol, new_symbol;
 	int symbols_count = 0;
 	bitset<BIT_COUNT> symbol_byte;
-	while ((symbol = tolower(f_input.get())) != -1)
-		if (symbol <= 'z' && symbol >= 'a' || symbol == ' ')
+	while ((symbol = tolower(f_input.get())) != -1) {
+		new_symbol = transform_symbol(symbol);
+		if (new_symbol != -1)
 		{
 			f_letters << symbol;
 
-			if (symbol == ' ')
-				symbol -= 32;
-			else
-				symbol -= 96;
-
-			symbol_byte = bitset<BIT_COUNT>(symbol);
+			symbol_byte = bitset<BIT_COUNT>(new_symbol);
 			symbols_count++;
 			f_letters_byte << symbol_byte;
 		}
+	}
 	symbols_count *= BIT_COUNT;
 
 	f_input.close();
@@ -102,20 +152,34 @@ void counting_symbols() {
 		mp2[sec]++;
 	}
 
-	for (map<char, int>::iterator p = mp1.begin(); p != mp1.end(); ++p) // ïðîõîäèì ïî âñåì ýëåìåíòàì 
+	for (map<char, int>::iterator p = mp1.begin(); p != mp1.end(); ++p) // проходим по всем элементам 
 		f_count1 << p->first << ':' << p->second << endl;
-	
-	for (map<char*, int>::iterator p1 = mp2.begin(); p1 != mp2.end(); ++p1)
-		f_count2 << p1->first << ' ' << p1->second << endl;
+
+	for (map<char*, int>::iterator p = mp2.begin(); p != mp2.end(); ++p)
+		f_count2 << p->first << ' ' << p->second << endl;
 
 	f_letters.close();
 	f_count1.close();
 	f_count2.close();
 }
 
+void create_key(int symbols_count) {
+	ofstream f_key;
+
+	f_key.open(KEY);
+
+	for (int i = 0; i < 32; i++)
+		LFSR();
+	for (int i = 1; i <= symbols_count; i++)
+		f_key << LFSR();
+
+	f_key.close();
+
+}
+
 void encryption(int symbols_count) {
-	ifstream f_letters_byte;
-	ofstream f_crypt_byte, f_key, f_crypt;
+	ifstream f_letters_byte, f_key;
+	ofstream f_crypt_byte, f_crypt;
 	char s[BIT_COUNT];
 
 	f_letters_byte.open(LETTERS_BYTE);
@@ -127,8 +191,7 @@ void encryption(int symbols_count) {
 		LFSR();
 
 	for (int i = 1; i <= symbols_count; i++) {
-		int byte = LFSR(), symbol = f_letters_byte.get();
-		f_key << byte;
+		int byte = f_key.get() - '0', symbol = f_letters_byte.get();
 		f_crypt_byte << (byte ^ (symbol - '0'));
 		s[BIT_COUNT - 1 - ((i - 1) % BIT_COUNT)] = (byte ^ (symbol - '0'));
 		if (i % BIT_COUNT == 0) {
@@ -157,15 +220,12 @@ void decryption(int symbols_count) {
 	for (int i = 1; i <= symbols_count; i++) {
 		s[BIT_COUNT - 1 - ((i - 1) % BIT_COUNT)] = ((key.get() - '0') ^ (input_crypt_byte.get() - '0'));
 		if (i % BIT_COUNT == 0) {
-			int symbol = 0;
+			char symbol = 0;
 			for (int j = BIT_COUNT - 1; j >= 0; j--) {
 				symbol += (int)s[j] * pow(2, j);
 			}
 
-			if (symbol == 0)
-				symbol += 32;
-			else
-				symbol += 96;
+			symbol = transform_symbol(symbol, false);
 			f_decrypt << (char)symbol;
 		}
 	}
@@ -178,7 +238,7 @@ void decryption(int symbols_count) {
 int main()
 {
 	long start = clock();
-    cout << "Removing of extra characters and converting to a binary system: ";
+	cout << "Removing of extra characters and converting to a binary system: ";
 	int symbols_count = removing_symbols();
 	long finish = clock();
 	cout << (finish - start) / 1000.0 << " s" << endl;
@@ -189,9 +249,16 @@ int main()
 	counting_symbols();
 	finish = clock();
 	cout << (finish - start) / 1000.0 << " s" << endl;
-	
 
-	cout << "Creating key and encrypting: ";
+
+	cout << "Creating key: ";
+	start = clock();
+	create_key(symbols_count);
+	finish = clock();
+	cout << (finish - start) / 1000.0 << " s" << endl;
+
+
+	cout << "Encrypting: ";
 	start = clock();
 	encryption(symbols_count);
 	finish = clock();
