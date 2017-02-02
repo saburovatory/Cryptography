@@ -6,6 +6,7 @@
 #include <time.h>
 #include <cstring>
 #include <cmath>
+#include <cstdio>
 
 using namespace std;
 
@@ -17,7 +18,8 @@ static string SYMBOL1 = "count_1_symbol.txt";
 static string SYMBOL2 = "count_2_symbols.txt";
 static string CRYPT_BYTE = "input_crypt_byte.txt";
 static string CRYPT = "input_crypt.txt";
-static string KEY = "key.txt";
+static string KEY = "work_key.txt";
+static string INITKEY = "key.txt";
 
 #pragma endregion
 
@@ -35,11 +37,9 @@ struct cmp_str
 //РСЛОС регистр сдвига с линейной обратной связью 
 int LFSR()
 {
-	//static unsigned long S = 0x00000001;
-	//S = ((((S >> 31) ^ (S >> 30) ^ (S >> 29) ^ (S >> 27) ^ (S >> 25) ^ S) & 0x00000001) << 31) | (S >> 1);
-	//return S & 0x00000001;
 	static unsigned long S = key_init;
-	S = ((((S >> 32) ^ (S >> 22) ^ (S >> 2) ^ (S >> 1)) & 0x00000001) << 31) | (S >> 1);
+    S = ((((S >> 31) ^ (S >> 30) ^ (S >> 29) ^ (S >> 27) ^ (S >> 25) ^ S) & 0x00000001) << 31) | (S >> 1);
+    //S = ((((S >> 32) ^ (S >> 22) ^ (S >> 2) ^ (S >> 1)) & 0x00000001) << 31) | (S >> 1);
 	return S & 0x00000001;
 }
 
@@ -161,7 +161,7 @@ void counting_symbols() {
 void init_key() {
 	ifstream f_key;
 
-	f_key.open(KEY);
+    f_key.open(INITKEY);
 	string key;
 	getline(f_key, key);
 	
@@ -221,7 +221,7 @@ void encryption(int symbols_count) {
 int main(int argc, char *argv[])
 {
 	if (argc > 1) {
-		KEY = argv[1];
+        INITKEY = argv[1];
 		if (argc > 2) {
 			INPUT = argv[2];
 			if (argc > 3)
