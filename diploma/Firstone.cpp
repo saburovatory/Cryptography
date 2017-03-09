@@ -25,6 +25,7 @@ static string INITKEY = "key.txt";
 
 const int BIT_COUNT = 5;
 static unsigned long key_init;
+static unsigned long symbols_count;
 
 struct cmp_str
 {
@@ -96,7 +97,7 @@ char transform_symbol(int symbol, bool direction = true)
 	return symbol;
 }
 
-int removing_symbols() {
+void removing_symbols() {
 	ifstream f_input;
 	ofstream f_input_byte;
 
@@ -104,7 +105,7 @@ int removing_symbols() {
 	f_input_byte.open(INPUT_BYTE);
 
 	char symbol, new_symbol;
-	int symbols_count = 0;
+	symbols_count = 0;
 	bitset<BIT_COUNT> symbol_byte;
 	while ((symbol = tolower(f_input.get())) != -1) {
 		new_symbol = transform_symbol(symbol);
@@ -119,9 +120,9 @@ int removing_symbols() {
 
 	f_input.close();
 	f_input_byte.close();
-
-	return symbols_count;
 }
+
+map<char*, int, cmp_str> mp2;
 
 void counting_symbols() {
 	ifstream f_input;
@@ -133,7 +134,6 @@ void counting_symbols() {
 
 	char symbol1, symbol2;
 	map<char, int> mp1;
-	map<char*, int, cmp_str> mp2;
 
 	char *sec;
 	while (f_input.get(symbol1) && f_input.get(symbol2))
@@ -170,7 +170,7 @@ void init_key() {
 	f_key.close();
 }
 
-void create_key(int symbols_count) {
+void create_key() {
 	ofstream f_key;
 
 	init_key();
@@ -184,10 +184,9 @@ void create_key(int symbols_count) {
 		f_key << LFSR();
 
 	f_key.close();
-
 }
 
-void encryption(int symbols_count) {
+void encryption() {
 	ifstream f_letters_byte, f_key;
 	ofstream f_crypt_byte, f_crypt;
 	char s[BIT_COUNT];
@@ -218,6 +217,30 @@ void encryption(int symbols_count) {
 	f_crypt.close();
 }
 
+double ratio_calc() {
+	ifstream f_count1, f_input;
+
+	f_input.open(INPUT);
+	f_count1.open(SYMBOL2);
+
+	double p0 = 1.0 / 1024;
+	double r = 1;
+	char symbol1, symbol2;
+	char *sec;
+
+	while (f_input.get(symbol1) && f_input.get(symbol2))
+	{
+		sec = new char[3];
+		sec[0] = symbol1;
+		sec[1] = symbol2;
+		sec[2] = 0;
+		f_input.seekg(-1, ios_base::cur);
+		r *= mp2.find(sec)->second/1024.0;
+	}
+
+	return r/pow(p0, (symbols_count/1024.0));
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc > 1) {
@@ -231,7 +254,7 @@ int main(int argc, char *argv[])
 
 	long start = clock();
 	cout << "Removing of extra characters and converting to a binary system: ";
-	int symbols_count = removing_symbols();
+	removing_symbols();
 	long finish = clock();
 	cout << (finish - start) / 1000.0 << " s" << endl;
 
@@ -245,16 +268,18 @@ int main(int argc, char *argv[])
 
 	cout << "Creating key: ";
 	start = clock();
-	create_key(symbols_count);
+	create_key();
 	finish = clock();
 	cout << (finish - start) / 1000.0 << " s" << endl;
 
 
 	cout << "Encrypting: ";
 	start = clock();
-	encryption(symbols_count);
+	encryption();
 	finish = clock();
 	cout << (finish - start) / 1000.0 << " s" << endl;
+
+	cout << ratio_calc() << endl;
 
 	system("pause");
 	return 0;
