@@ -122,8 +122,6 @@ void removing_symbols() {
 	f_input_byte.close();
 }
 
-map<char*, int, cmp_str> mp2;
-
 void counting_symbols() {
 	ifstream f_input;
 	ofstream f_count1, f_count2;
@@ -134,6 +132,7 @@ void counting_symbols() {
 
 	char symbol1, symbol2;
 	map<char, int> mp1;
+	map<char*, int, cmp_str> mp2;
 
 	char *sec;
 	while (f_input.get(symbol1) && f_input.get(symbol2))
@@ -217,16 +216,44 @@ void encryption() {
 	f_crypt.close();
 }
 
-double ratio_calc() {
-	ifstream f_count1, f_input;
+map<char*, int, cmp_str> load_bigramm() {
+	ifstream f_count2;
+	char symbol1, symbol2;
+	map<char*, int, cmp_str> result;
 
-	f_input.open(INPUT);
-	f_count1.open(SYMBOL2);
+	f_count2.open(SYMBOL2);
+	char *sec;
+	char *count;
+
+	while (f_count2.get(symbol1) && f_count2.get(symbol2))
+	{
+		sec = new char[3];
+		count = new char[10];
+		sec[0] = symbol1;
+		sec[1] = symbol2;
+		sec[2] = 0;
+
+		f_count2.get();
+		f_count2.getline(count, 10);
+		result[sec] = atoi(count);
+	}
+
+	return result;
+}
+
+double ratio_calc() {
+	ifstream f_input;
+
+	f_input.open("input2.txt");
 
 	double p0 = 1.0 / 1024;
-	double r = 1;
+	double r = 0;
 	char symbol1, symbol2;
 	char *sec;
+
+	map<char*, int, cmp_str> bg = load_bigramm();
+
+	int count = 0;
 
 	while (f_input.get(symbol1) && f_input.get(symbol2))
 	{
@@ -234,11 +261,17 @@ double ratio_calc() {
 		sec[0] = symbol1;
 		sec[1] = symbol2;
 		sec[2] = 0;
+
 		f_input.seekg(-1, ios_base::cur);
-		r *= mp2.find(sec)->second/1024.0;
+		if (bg.find(sec) == bg.end())
+			return 0;
+		else
+			r += log(bg.find(sec)->second / (symbols_count/5 - 1.0));
+
+		count++;
 	}
 
-	return r/pow(p0, (symbols_count/1024.0));
+	return r - count * log(p0);
 }
 
 int main(int argc, char *argv[])
