@@ -244,7 +244,7 @@ map<char*, int, cmp_str> load_bigramm() {
 double ratio_calc() {
 	ifstream f_input;
 
-	f_input.open("input2.txt");
+    f_input.open("c1.txt");
 
 	double p0 = 1.0 / 1024;
 	double r = 0;
@@ -264,7 +264,8 @@ double ratio_calc() {
 
 		f_input.seekg(-1, ios_base::cur);
 		if (bg.find(sec) == bg.end())
-			return 0;
+            //return 0;
+            r += log(1e-308);
 		else
 			r += log(bg.find(sec)->second / (symbols_count/5 - 1.0));
 
