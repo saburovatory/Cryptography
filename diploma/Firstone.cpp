@@ -13,13 +13,14 @@ using namespace std;
 #pragma region Files
 
 static string INPUT = "input.txt";
+static string INPUT_NEW = "input_new.txt";
 static string INPUT_BYTE = "input_byte.txt";
 static string SYMBOL1 = "count_1_symbol.txt";
 static string SYMBOL2 = "count_2_symbols.txt";
 static string CRYPT_BYTE = "input_crypt_byte.txt";
 static string CRYPT = "input_crypt.txt";
-static string KEY = "work_key.txt";
-static string INITKEY = "key.txt";
+static string KEY = "key.txt";
+static string INITKEY = "key_init.txt";
 
 #pragma endregion
 
@@ -99,9 +100,10 @@ char transform_symbol(int symbol, bool direction = true)
 
 void removing_symbols() {
 	ifstream f_input;
-	ofstream f_input_byte;
+	ofstream f_input_byte, f_input_new;
 
 	f_input.open(INPUT);
+	f_input_new.open(INPUT_NEW);
 	f_input_byte.open(INPUT_BYTE);
 
 	char symbol, new_symbol;
@@ -114,12 +116,17 @@ void removing_symbols() {
 			symbol_byte = bitset<BIT_COUNT>(new_symbol);
 			symbols_count++;
 			f_input_byte << symbol_byte;
+			f_input_new << symbol;
 		}
 	}
 	symbols_count *= BIT_COUNT;
 
 	f_input.close();
+	f_input_new.close();
 	f_input_byte.close();
+
+	remove(INPUT.c_str());
+	rename(INPUT_NEW.c_str(), INPUT.c_str());
 }
 
 void counting_symbols() {
@@ -244,14 +251,21 @@ map<char*, int, cmp_str> load_bigramm() {
 double ratio_calc() {
 	ifstream f_input;
 
-    f_input.open("c1.txt");
+    f_input.open("input2.txt");
 
+	int symbols_count = 0;
 	double p0 = 1.0 / 1024;
 	double r = 0;
 	char symbol1, symbol2;
 	char *sec;
 
 	map<char*, int, cmp_str> bg = load_bigramm();
+	for (map<char*, int, cmp_str>::iterator it = bg.begin(); it != bg.end(); ++it)
+	{
+		symbols_count += it->second;
+	}
+
+	symbols_count++;
 
 	int count = 0;
 
@@ -267,12 +281,41 @@ double ratio_calc() {
             //return 0;
             r += log(1e-308);
 		else
-			r += log(bg.find(sec)->second / (symbols_count/5 - 1.0));
+			r += log(bg.find(sec)->second / (symbols_count/BIT_COUNT - 1.0));
 
 		count++;
 	}
 
 	return r - count * log(p0);
+}
+
+void find_limits() {
+	ofstream f_input2, f_output;
+	ifstream f_input;
+
+	f_output.open("limits.txt");
+	f_input.open("input_crypt.txt");
+
+	int count = 2;
+	char symbol;
+
+	while (count < 100000) {
+		f_input2.open("input2.txt");
+		
+		f_input.seekg(rand()%100000, ios_base::beg);
+		for (int i = 0; i < count; i++) {
+			f_input.get(symbol);
+			f_input2 << symbol;
+		}
+
+		f_input2.close();
+
+		f_output << count << " - " << ratio_calc() << endl;
+		count = count * 1.2 + 1;
+	}
+
+	f_input.close();
+	f_output.close();
 }
 
 int main(int argc, char *argv[])
@@ -313,7 +356,8 @@ int main(int argc, char *argv[])
 	finish = clock();
 	cout << (finish - start) / 1000.0 << " s" << endl;
 
-	cout << ratio_calc() << endl;
+	srand(time(NULL));
+	find_limits();
 
 	system("pause");
 	return 0;
