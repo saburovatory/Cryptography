@@ -1,4 +1,4 @@
-#include <fstream> 
+﻿#include <fstream> 
 #include <iostream> 
 #include <map> 
 #include <bitset>
@@ -290,30 +290,40 @@ double ratio_calc() {
 }
 
 void find_limits() {
+	const int MAX_SYMBOLS = 100000;
+	const int TEST_COUNT = 30;
+	const int MIN_SYMBOLS = 2;
+	string LIMITS_OUT = "limits1.txt";
+	string LIMITS_IN = "input.txt";
 	ofstream f_input2, f_output;
 	ifstream f_input;
 
-	f_output.open("limits.txt");
-	f_input.open("input_crypt.txt");
+	f_output.open(LIMITS_OUT);
+	f_input.open(LIMITS_IN);
 
-	int count = 2;
+	int count = MIN_SYMBOLS;
 	char symbol;
 
-	while (count < 100000) {
+	f_input.seekg(0, f_input.end);
+	int symbols_count = f_input.tellg();
+
+	while (count < MAX_SYMBOLS) {
 		f_input2.open("input2.txt");
-		
-		f_input.seekg(rand()%100000, ios_base::beg);
-		for (int i = 0; i < count; i++) {
-			f_input.get(symbol);
-			f_input2 << symbol;
-		}
-
-		f_input2.close();
-
-		f_output << count << " - " << ratio_calc() << endl;
+		double sum = 0;
+			for (int j = 0; j < TEST_COUNT; j++) {
+				f_input.seekg(rand() % (symbols_count - count - 1), f_input.beg);
+				for (int i = 0; i < count; i++) {
+					f_input.get(symbol);
+					f_input2 << symbol;
+				}
+				f_input2.close();
+				sum += ratio_calc() / TEST_COUNT;
+			}
+		f_output << count << " - " << sum << endl;
 		count = count * 1.2 + 1;
 	}
 
+	//remove("input2.txt");
 	f_input.close();
 	f_output.close();
 }
