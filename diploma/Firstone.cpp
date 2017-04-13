@@ -40,8 +40,8 @@ struct cmp_str
 int LFSR()
 {
 	static unsigned long S = key_init;
-    S = ((((S >> 31) ^ (S >> 30) ^ (S >> 29) ^ (S >> 27) ^ (S >> 25) ^ S) & 0x00000001) << 31) | (S >> 1);
-    //S = ((((S >> 32) ^ (S >> 22) ^ (S >> 2) ^ (S >> 1)) & 0x00000001) << 31) | (S >> 1);
+	S = ((((S >> 31) ^ (S >> 30) ^ (S >> 29) ^ (S >> 27) ^ (S >> 25) ^ S) & 0x00000001) << 31) | (S >> 1);
+	//S = ((((S >> 32) ^ (S >> 22) ^ (S >> 2) ^ (S >> 1)) & 0x00000001) << 31) | (S >> 1);
 	return S & 0x00000001;
 }
 
@@ -70,7 +70,8 @@ char transform_symbol(int symbol, bool direction = true)
 									symbol -= 3; //31
 								else
 									symbol = -1;
-	} else {
+	}
+	else {
 		if (symbol == 0)
 			symbol += 32;
 		else
@@ -167,10 +168,10 @@ void counting_symbols() {
 void init_key() {
 	ifstream f_key;
 
-    f_key.open(INITKEY);
+	f_key.open(INITKEY);
 	string key;
 	getline(f_key, key);
-	
+
 	key_init = atoi(key.c_str());
 
 	f_key.close();
@@ -251,7 +252,7 @@ map<char*, int, cmp_str> load_bigramm() {
 double ratio_calc() {
 	ifstream f_input;
 
-    f_input.open("input2.txt");
+	f_input.open("input2.txt");
 
 	int symbols_count = 0;
 	double p0 = 1.0 / 1024;
@@ -277,11 +278,11 @@ double ratio_calc() {
 		sec[2] = 0;
 
 		f_input.seekg(-1, ios_base::cur);
-		if (bg.find(sec) == bg.end())
-            //return 0;
-            r += log(1e-308);
+		if (bg.find(sec) == bg.end());
+			//return 0;
+			//r += log(1e-308);
 		else
-			r += log(bg.find(sec)->second / (symbols_count/BIT_COUNT - 1.0));
+			r += log(bg.find(sec)->second / (symbols_count / BIT_COUNT - 1.0));
 
 		count++;
 	}
@@ -291,10 +292,10 @@ double ratio_calc() {
 
 void find_limits() {
 	const int MAX_SYMBOLS = 100000;
-	const int TEST_COUNT = 30;
+	const int TEST_COUNT = 10;
 	const int MIN_SYMBOLS = 2;
-	string LIMITS_OUT = "limits1.txt";
-	string LIMITS_IN = "input.txt";
+	string LIMITS_OUT = "limits.txt";
+	string LIMITS_IN = "input_crypt.txt";
 	ofstream f_input2, f_output;
 	ifstream f_input;
 
@@ -308,18 +309,22 @@ void find_limits() {
 	int symbols_count = f_input.tellg();
 
 	while (count < MAX_SYMBOLS) {
-		f_input2.open("input2.txt");
-		double sum = 0;
-			for (int j = 0; j < TEST_COUNT; j++) {
-				f_input.seekg(rand() % (symbols_count - count - 1), f_input.beg);
-				for (int i = 0; i < count; i++) {
-					f_input.get(symbol);
-					f_input2 << symbol;
-				}
-				f_input2.close();
-				sum += ratio_calc() / TEST_COUNT;
+		double sum = 0, sum2 = 0;
+		for (int j = 0; j < TEST_COUNT; j++) {
+			f_input2.open("input2.txt");
+			f_input.seekg(rand() % (symbols_count - count - 1), f_input.beg);
+			for (int i = 0; i < count; i++) {
+				f_input.get(symbol);
+				f_input2 << symbol;
 			}
-		f_output << count << " - " << sum << endl;
+			f_input2.close();
+			double ratio = ratio_calc();
+			sum += ratio;
+			sum2 += pow(ratio, 2);
+			cout << ratio << " ";
+		}
+		cout << endl;
+		f_output << count << " - " << sum / TEST_COUNT << ", d^2 = " << sum2 / TEST_COUNT - pow(sum / TEST_COUNT, 2) << endl;
 		count = count * 1.2 + 1;
 	}
 
@@ -331,7 +336,7 @@ void find_limits() {
 int main(int argc, char *argv[])
 {
 	if (argc > 1) {
-        INITKEY = argv[1];
+		INITKEY = argv[1];
 		if (argc > 2) {
 			INPUT = argv[2];
 			if (argc > 3)
@@ -339,7 +344,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	long start = clock();
+	/*long start = clock();
 	cout << "Removing of extra characters and converting to a binary system: ";
 	removing_symbols();
 	long finish = clock();
@@ -365,7 +370,7 @@ int main(int argc, char *argv[])
 	encryption();
 	finish = clock();
 	cout << (finish - start) / 1000.0 << " s" << endl;
-
+	*/
 	srand(time(NULL));
 	find_limits();
 
