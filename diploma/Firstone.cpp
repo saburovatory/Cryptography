@@ -278,9 +278,8 @@ double ratio_calc() {
 		sec[2] = 0;
 
 		f_input.seekg(-1, ios_base::cur);
-		if (bg.find(sec) == bg.end());
-			//return 0;
-			//r += log(1e-308);
+		if (bg.find(sec) == bg.end())
+			r += log(1e-308);
 		else
 			r += log(bg.find(sec)->second / (symbols_count / BIT_COUNT - 1.0));
 
@@ -324,7 +323,7 @@ void find_limits() {
 			cout << ratio << " ";
 		}
 		cout << endl;
-		f_output << count << " - " << sum / TEST_COUNT << ", d^2 = " << sum2 / TEST_COUNT - pow(sum / TEST_COUNT, 2) << endl;
+		f_output << count << " - " << sum / TEST_COUNT << ", d^2 = " << pow(sum2 / TEST_COUNT - pow(sum / TEST_COUNT, 2),1/2) << endl;
 		count = count * 1.2 + 1;
 	}
 
