@@ -1,4 +1,4 @@
-﻿#include <fstream> 
+#include <fstream> 
 #include <iostream> 
 #include <map> 
 #include <bitset>
@@ -7,6 +7,10 @@
 #include <cstring>
 #include <cmath>
 #include <cstdio>
+#include <string>
+#include <sstream>
+#include <vector>
+#include <iterator>
 
 using namespace std;
 
@@ -249,10 +253,10 @@ map<char*, int, cmp_str> load_bigramm() {
 	return result;
 }
 
-double ratio_calc() {
+double ratio_calc(string path) {
 	ifstream f_input;
 
-	f_input.open("input2.txt");
+	f_input.open(path);
 
 	int symbols_count = 0;
 	double p0 = 1.0 / 1024;
@@ -286,50 +290,89 @@ double ratio_calc() {
 		count++;
 	}
 
+	f_input.close();
+
 	return r - count * log(p0);
 }
 
-void find_limits() {
-	const int MAX_SYMBOLS = 100000;
-	const int TEST_COUNT = 10;
-	const int MIN_SYMBOLS = 2;
-	string LIMITS_OUT = "limits.txt";
-	string LIMITS_IN = "input_crypt.txt";
-	ofstream f_input2, f_output;
+int file_symbol_count(string path) {
 	ifstream f_input;
-
-	f_output.open(LIMITS_OUT);
-	f_input.open(LIMITS_IN);
-
-	int count = MIN_SYMBOLS;
-	char symbol;
+	f_input.open(path);
 
 	f_input.seekg(0, f_input.end);
 	int symbols_count = f_input.tellg();
 
-	while (count < MAX_SYMBOLS) {
-		double sum = 0, sum2 = 0;
-		for (int j = 0; j < TEST_COUNT; j++) {
-			f_input2.open("input2.txt");
-			f_input.seekg(rand() % (symbols_count - count - 1), f_input.beg);
-			for (int i = 0; i < count; i++) {
-				f_input.get(symbol);
-				f_input2 << symbol;
-			}
-			f_input2.close();
-			double ratio = ratio_calc();
-			sum += ratio;
-			sum2 += pow(ratio, 2);
-			cout << ratio << " ";
+	f_input.close();
+
+	return symbols_count;
+}
+
+double* find_limits(int c, string path) {
+	const int TEST_COUNT = 10;
+	string TEMP_TEXT = "input2.txt";
+	ofstream f_input2;
+	ifstream f_input;
+
+	f_input.open(path);
+
+	int count = c;
+	char symbol;
+
+	int symbols_count = file_symbol_count(path);
+
+	double sum = 0, sum2 = 0;
+	for (int j = 0; j < TEST_COUNT; j++) {
+		f_input2.open(TEMP_TEXT);
+		f_input.seekg(rand() % (symbols_count - count - 1), f_input.beg);
+		for (int i = 0; i < count; i++) {
+			f_input.get(symbol);
+			f_input2 << symbol;
 		}
-		cout << endl;
-		f_output << count << " - " << sum / TEST_COUNT << ", d^2 = " << pow(sum2 / TEST_COUNT - pow(sum / TEST_COUNT, 2),1/2) << endl;
-		count = count * 1.2 + 1;
+		f_input2.close();
+		double ratio = ratio_calc(TEMP_TEXT);
+		sum += ratio / TEST_COUNT;
+		sum2 += pow(ratio, 2) / TEST_COUNT;
 	}
 
-	//remove("input2.txt");
+	remove(TEMP_TEXT.c_str());
 	f_input.close();
-	f_output.close();
+
+	return new double[2]{sum, pow(sum2 - pow(sum,2), 0.5)};
+}
+
+bool text_det(string text_path) {
+	double ratio;
+	string TEMP_TEXT = "input2.txt";
+	int symbols = file_symbol_count(text_path);
+	int count = pow(symbols, 0.1) + 1;
+	char symbol;
+	ifstream f_input;
+	ofstream f_output;
+	f_input.open(text_path);
+	f_output.open(TEMP_TEXT);
+
+	double* info = new double[2];
+	double *info_crypt = new double[2];
+	
+	while (count < symbols) {
+		for (int i = 0; i < count; i++) {
+			f_input.get(symbol);
+			f_output << symbol;
+		}
+		f_input.close();
+		f_output.close();
+		ratio = ratio_calc(TEMP_TEXT);
+		info = find_limits(count, INPUT);
+		info_crypt = find_limits(count, CRYPT);
+		if (ratio > info[0] - 3 * info[1])
+			return true;
+		else if (ratio < info_crypt[0] + 3 * info_crypt[1])
+			return false;
+		else
+			count *= count;
+	}
+
+	return true;
 }
 
 int main(int argc, char *argv[])
@@ -343,7 +386,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	/*long start = clock();
+	long start = clock();
 	cout << "Removing of extra characters and converting to a binary system: ";
 	removing_symbols();
 	long finish = clock();
@@ -369,9 +412,12 @@ int main(int argc, char *argv[])
 	encryption();
 	finish = clock();
 	cout << (finish - start) / 1000.0 << " s" << endl;
-	*/
+
 	srand(time(NULL));
-	find_limits();
+	if (text_det("test.txt"))
+		cout << "OPEN" << endl;
+	else
+		cout << "CLOSE" << endl;
 
 	system("pause");
 	return 0;
