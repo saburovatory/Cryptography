@@ -2,15 +2,7 @@
 #include <iostream> 
 #include <map> 
 #include <bitset>
-#include <locale.h>
 #include <time.h>
-#include <cstring>
-#include <cmath>
-#include <cstdio>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <iterator>
 
 using namespace std;
 
@@ -21,7 +13,6 @@ static string INPUT_NEW = "input_new.txt";
 static string INPUT_BYTE = "input_byte.txt";
 static string SYMBOL1 = "count_1_symbol.txt";
 static string SYMBOL2 = "count_2_symbols.txt";
-static string CRYPT_BYTE = "input_crypt_byte.txt";
 static string CRYPT = "input_crypt.txt";
 static string KEY = "key.txt";
 static string INITKEY = "key_init.txt";
@@ -30,7 +21,6 @@ static string INITKEY = "key_init.txt";
 
 const int BIT_COUNT = 5;
 static unsigned long key_init;
-static unsigned long symbols_count;
 
 struct cmp_str
 {
@@ -52,52 +42,60 @@ int LFSR()
 char transform_symbol(int symbol, bool direction = true)
 {
 	if (direction) {
-		if (symbol == ' ')
-			symbol -= 32;  //0
+		if (symbol >= 'a' && symbol <= 'z')
+			symbol -= 96; //1-26
 		else
-			if (symbol >= 'a' && symbol <= 'z')
-				symbol -= 96; //1-26
-			else
-				if (symbol == '.')
-					symbol -= 19; //27
-				else
-					if (symbol == ',')
-						symbol -= 16; //28
-					else
-						if (symbol == '!')
-							symbol -= 4; //29
-						else
-							if (symbol == '?')
-								symbol -= 33; //30
-							else
-								if (symbol == '"')
-									symbol -= 3; //31
-								else
-									symbol = -1;
+			switch (symbol)
+			{
+			case (' '):
+				symbol -= 32; //0
+				break;
+			case('.'):
+				symbol -= 19; //27
+				break;
+			case(','):
+				symbol -= 16; //28
+				break;
+			case('!'):
+				symbol -= 4; //29
+				break;
+			case('?'):
+				symbol -= 33; //30
+				break;
+			case('"'):
+				symbol -= 3; //31
+				break;
+			default:
+				symbol = -1;
+			}
 	}
 	else {
-		if (symbol == 0)
-			symbol += 32;
+		if (symbol >= 1 && symbol <= 26)
+			symbol += 96;
 		else
-			if (symbol >= 1 && symbol <= 26)
-				symbol += 96;
-			else
-				if (symbol == 27)
-					symbol += 19;
-				else
-					if (symbol == 28)
-						symbol += 16;
-					else
-						if (symbol == 29)
-							symbol += 4;
-						else
-							if (symbol == 30)
-								symbol += 33;
-							else
-								if (symbol == 31)
-									symbol += 3;
-								else
-									symbol = -1;
+			switch (symbol)
+			{
+			case (0):
+				symbol += 32; // 
+				break;
+			case(27):
+				symbol += 19; //.
+				break;
+			case(28):
+				symbol += 16; //,
+				break;
+			case(29):
+				symbol += 4; //!
+				break;
+			case(30):
+				symbol += 33; //?
+				break;
+			case(31):
+				symbol += 3; //"
+				break;
+			default:
+				symbol = -1;
+			}
 	}
 
 	return symbol;
@@ -112,19 +110,16 @@ void removing_symbols() {
 	f_input_byte.open(INPUT_BYTE);
 
 	char symbol, new_symbol;
-	symbols_count = 0;
 	bitset<BIT_COUNT> symbol_byte;
 	while ((symbol = tolower(f_input.get())) != -1) {
 		new_symbol = transform_symbol(symbol);
 		if (new_symbol != -1)
 		{
 			symbol_byte = bitset<BIT_COUNT>(new_symbol);
-			symbols_count++;
 			f_input_byte << symbol_byte;
 			f_input_new << symbol;
 		}
 	}
-	symbols_count *= BIT_COUNT;
 
 	f_input.close();
 	f_input_new.close();
@@ -149,10 +144,7 @@ void counting_symbols() {
 	char *sec;
 	while (f_input.get(symbol1) && f_input.get(symbol2))
 	{
-		sec = new char[3];
-		sec[0] = symbol1;
-		sec[1] = symbol2;
-		sec[2] = 0;
+		sec = new char[3]{ symbol1, symbol2, 0 };
 		f_input.seekg(-1, ios_base::cur);
 		mp1[symbol1]++;
 		mp2[sec]++;
@@ -169,6 +161,19 @@ void counting_symbols() {
 	f_count2.close();
 }
 
+int file_symbol_count(string path) {
+	ifstream f_input;
+	f_input.open(path);
+
+	f_input.seekg(0, f_input.end);
+	int symbols_count = f_input.tellg();
+
+	f_input.close();
+
+	return symbols_count;
+}
+
+
 void init_key() {
 	ifstream f_key;
 
@@ -181,38 +186,22 @@ void init_key() {
 	f_key.close();
 }
 
-void create_key() {
-	ofstream f_key;
-
-	init_key();
-
-	f_key.open(KEY);
-
-	for (int i = 0; i < 32; i++)
-		LFSR();
-
-	for (int i = 1; i <= symbols_count; i++)
-		f_key << LFSR();
-
-	f_key.close();
-}
-
 void encryption() {
-	ifstream f_letters_byte, f_key;
-	ofstream f_crypt_byte, f_crypt;
+	ifstream f_letters_byte;
+	ofstream f_crypt;
 	char s[BIT_COUNT];
+	int symbols_count = file_symbol_count(INPUT)*BIT_COUNT;
 
 	f_letters_byte.open(INPUT_BYTE);
 	f_crypt.open(CRYPT);
-	f_crypt_byte.open(CRYPT_BYTE);
-	f_key.open(KEY);
+
+	init_key();
 
 	for (int i = 0; i < 32; i++)
 		LFSR();
 
 	for (int i = 1; i <= symbols_count; i++) {
-		int byte = f_key.get() - '0', symbol = f_letters_byte.get(), crypt_symbol = 0;
-		f_crypt_byte << (byte ^ (symbol - '0'));
+		int byte = LFSR(), symbol = f_letters_byte.get(), crypt_symbol = 0;
 		s[BIT_COUNT - 1 - ((i - 1) % BIT_COUNT)] = (byte ^ (symbol - '0'));
 		if (i % BIT_COUNT == 0) {
 			for (int j = BIT_COUNT - 1; j >= 0; j--) {
@@ -223,8 +212,6 @@ void encryption() {
 	}
 
 	f_letters_byte.close();
-	f_crypt_byte.close();
-	f_key.close();
 	f_crypt.close();
 }
 
@@ -256,24 +243,15 @@ map<char*, int, cmp_str> load_bigramm() {
 double ratio_calc(string path) {
 	ifstream f_input;
 
-	f_input.open(path);
-
-	int symbols_count = 0;
+	int symbols_count = file_symbol_count(INPUT), count = file_symbol_count(path) - 1;
 	double p0 = 1.0 / 1024;
 	double r = 0;
 	char symbol1, symbol2;
 	char *sec;
 
 	map<char*, int, cmp_str> bg = load_bigramm();
-	for (map<char*, int, cmp_str>::iterator it = bg.begin(); it != bg.end(); ++it)
-	{
-		symbols_count += it->second;
-	}
 
-	symbols_count++;
-
-	int count = 0;
-
+	f_input.open(path);
 	while (f_input.get(symbol1) && f_input.get(symbol2))
 	{
 		sec = new char[3];
@@ -286,8 +264,6 @@ double ratio_calc(string path) {
 			r += log(1e-308);
 		else
 			r += log(bg.find(sec)->second / (symbols_count / BIT_COUNT - 1.0));
-
-		count++;
 	}
 
 	f_input.close();
@@ -295,17 +271,6 @@ double ratio_calc(string path) {
 	return r - count * log(p0);
 }
 
-int file_symbol_count(string path) {
-	ifstream f_input;
-	f_input.open(path);
-
-	f_input.seekg(0, f_input.end);
-	int symbols_count = f_input.tellg();
-
-	f_input.close();
-
-	return symbols_count;
-}
 
 double* find_limits(int c, string path) {
 	const int TEST_COUNT = 10;
@@ -334,37 +299,40 @@ double* find_limits(int c, string path) {
 		sum2 += pow(ratio, 2) / TEST_COUNT;
 	}
 
-	remove(TEMP_TEXT.c_str());
 	f_input.close();
 
-	return new double[2]{sum, pow(sum2 - pow(sum,2), 0.5)};
+	return new double[2]{ sum, pow(sum2 - pow(sum, 2), 0.5) };
 }
 
 bool text_det(string text_path) {
 	double ratio;
-	string TEMP_TEXT = "input2.txt";
+	string TEMP_TEXT = "input3.txt";
 	int symbols = file_symbol_count(text_path);
-	int count = pow(symbols, 0.1) + 1;
+	int count = pow(symbols, 0.1) + 1, old_count = 0;
 	char symbol;
 	ifstream f_input;
 	ofstream f_output;
 	f_input.open(text_path);
-	f_output.open(TEMP_TEXT);
+	f_output.open(TEMP_TEXT, ios_base::trunc);
+	f_output.close();
 
 	double* info = new double[2];
 	double *info_crypt = new double[2];
 	
 	while (count < symbols) {
-		for (int i = 0; i < count; i++) {
+		f_output.open(TEMP_TEXT, ios_base::app);
+		for (int i = 0; i < count - old_count; i++) {
 			f_input.get(symbol);
 			f_output << symbol;
 		}
-		f_input.close();
+		old_count = count;
 		f_output.close();
 		ratio = ratio_calc(TEMP_TEXT);
 		info = find_limits(count, INPUT);
 		info_crypt = find_limits(count, CRYPT);
-		if (ratio > info[0] - 3 * info[1])
+		if (ratio > info[0] - 3 * info[1] && ratio < info_crypt[0] + 3 * info_crypt[1])
+			count *= count;
+		else if (ratio > info[0] - 3 * info[1])
 			return true;
 		else if (ratio < info_crypt[0] + 3 * info_crypt[1])
 			return false;
@@ -396,13 +364,6 @@ int main(int argc, char *argv[])
 	cout << "Counting single and double symbols: ";
 	start = clock();
 	counting_symbols();
-	finish = clock();
-	cout << (finish - start) / 1000.0 << " s" << endl;
-
-
-	cout << "Creating key: ";
-	start = clock();
-	create_key();
 	finish = clock();
 	cout << (finish - start) / 1000.0 << " s" << endl;
 
