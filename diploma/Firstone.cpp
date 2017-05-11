@@ -103,27 +103,20 @@ char transform_symbol(int symbol, bool direction = true)
 
 void removing_symbols() {
 	ifstream f_input;
-	ofstream f_input_byte, f_input_new;
+	ofstream f_input_new;
 
 	f_input.open(INPUT);
 	f_input_new.open(INPUT_NEW);
-	f_input_byte.open(INPUT_BYTE);
 
 	char symbol, new_symbol;
-	bitset<BIT_COUNT> symbol_byte;
+	
 	while ((symbol = tolower(f_input.get())) != -1) {
 		new_symbol = transform_symbol(symbol);
 		if (new_symbol != -1)
-		{
-			symbol_byte = bitset<BIT_COUNT>(new_symbol);
-			f_input_byte << symbol_byte;
 			f_input_new << symbol;
-		}
 	}
-
 	f_input.close();
 	f_input_new.close();
-	f_input_byte.close();
 
 	remove(INPUT.c_str());
 	rename(INPUT_NEW.c_str(), INPUT.c_str());
@@ -173,7 +166,6 @@ int file_symbol_count(string path) {
 	return symbols_count;
 }
 
-
 void init_key() {
 	ifstream f_key;
 
@@ -187,12 +179,12 @@ void init_key() {
 }
 
 void encryption() {
-	ifstream f_letters_byte;
+	ifstream f_input;
 	ofstream f_crypt;
-	char s[BIT_COUNT];
-	int symbols_count = file_symbol_count(INPUT)*BIT_COUNT;
+	int symbols_count = file_symbol_count(INPUT), crypt_symbol, symbol, new_symbol;
+	bitset<BIT_COUNT> symbol_byte;
 
-	f_letters_byte.open(INPUT_BYTE);
+	f_input.open(INPUT);
 	f_crypt.open(CRYPT);
 
 	init_key();
@@ -201,17 +193,20 @@ void encryption() {
 		LFSR();
 
 	for (int i = 1; i <= symbols_count; i++) {
-		int byte = LFSR(), symbol = f_letters_byte.get(), crypt_symbol = 0;
-		s[BIT_COUNT - 1 - ((i - 1) % BIT_COUNT)] = (byte ^ (symbol - '0'));
-		if (i % BIT_COUNT == 0) {
-			for (int j = BIT_COUNT - 1; j >= 0; j--) {
-				crypt_symbol += (int)s[j] * pow(2, j);
-			}
-			f_crypt << transform_symbol(crypt_symbol, false);
+		symbol = f_input.get();
+		new_symbol = transform_symbol(symbol);
+		symbol_byte = bitset<BIT_COUNT>(new_symbol);
+		crypt_symbol = 0;
+		for (int j = BIT_COUNT - 1; j >= 0; j--)
+		{
+			int byte = LFSR();
+			symbol = symbol_byte[j];
+			crypt_symbol += (byte ^ symbol) * pow(2, j);
 		}
+		f_crypt << transform_symbol(crypt_symbol, false);
 	}
 
-	f_letters_byte.close();
+	f_input.close();
 	f_crypt.close();
 }
 
@@ -258,7 +253,7 @@ double ratio_calc(string path) {
 		sec[0] = symbol1;
 		sec[1] = symbol2;
 		sec[2] = 0;
-
+		
 		f_input.seekg(-1, ios_base::cur);
 		if (bg.find(sec) == bg.end())
 			r += log(1e-308);
@@ -270,7 +265,6 @@ double ratio_calc(string path) {
 
 	return r - count * log(p0);
 }
-
 
 double* find_limits(int c, string path) {
 	const int TEST_COUNT = 10;
