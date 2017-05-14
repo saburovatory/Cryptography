@@ -10,7 +10,6 @@ using namespace std;
 
 static string INPUT = "input.txt";
 static string INPUT_NEW = "input_new.txt";
-static string INPUT_BYTE = "input_byte.txt";
 static string SYMBOL1 = "count_1_symbol.txt";
 static string SYMBOL2 = "count_2_symbols.txt";
 static string CRYPT = "input_crypt.txt";
@@ -33,9 +32,10 @@ struct cmp_str
 //РСЛОС регистр сдвига с линейной обратной связью 
 int LFSR()
 {
-	static unsigned long S = key_init;
+	unsigned long S = key_init;
 	S = ((((S >> 31) ^ (S >> 30) ^ (S >> 29) ^ (S >> 27) ^ (S >> 25) ^ S) & 0x00000001) << 31) | (S >> 1);
 	//S = ((((S >> 32) ^ (S >> 22) ^ (S >> 2) ^ (S >> 1)) & 0x00000001) << 31) | (S >> 1);
+	key_init = S;
 	return S & 0x00000001;
 }
 
@@ -178,14 +178,14 @@ void init_key() {
 	f_key.close();
 }
 
-void encryption() {
+void encryption(string input_path = INPUT, string crypt_path = CRYPT) {
 	ifstream f_input;
 	ofstream f_crypt;
 	int symbols_count = file_symbol_count(INPUT), crypt_symbol, symbol, new_symbol;
 	bitset<BIT_COUNT> symbol_byte;
 
-	f_input.open(INPUT);
-	f_crypt.open(CRYPT);
+	f_input.open(input_path);
+	f_crypt.open(crypt_path);
 
 	init_key();
 
@@ -294,6 +294,7 @@ double* find_limits(int c, string path) {
 	}
 
 	f_input.close();
+	remove(TEMP_TEXT.c_str());
 
 	return new double[2]{ sum, pow(sum2 - pow(sum, 2), 0.5) };
 }
@@ -327,9 +328,15 @@ bool text_det(string text_path) {
 		if (ratio > info[0] - 3 * info[1] && ratio < info_crypt[0] + 3 * info_crypt[1])
 			count *= count;
 		else if (ratio > info[0] - 3 * info[1])
+		{
+			remove(TEMP_TEXT.c_str());
 			return true;
+		}
 		else if (ratio < info_crypt[0] + 3 * info_crypt[1])
+		{
+			remove(TEMP_TEXT.c_str());
 			return false;
+		}
 		else
 			count *= count;
 	}
@@ -337,8 +344,28 @@ bool text_det(string text_path) {
 	return true;
 }
 
+int find_key() {
+	ofstream f_key;
+	bool find = false;
+	int key = 1;
+	string TEMP_TEXT = "crypt_decrypt.txt";
+
+	while (!find)
+	{
+		f_key.open(INITKEY);
+		f_key << key;
+		f_key.close();
+		encryption(CRYPT, TEMP_TEXT);
+		find = text_det(TEMP_TEXT);
+		key++;
+	}
+
+	return key - 1;
+}
+
 int main(int argc, char *argv[])
 {
+	long start, finish;
 	if (argc > 1) {
 		INITKEY = argv[1];
 		if (argc > 2) {
@@ -348,10 +375,13 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	long start = clock();
+	srand(time(NULL));
+
+	
+	start = clock();
 	cout << "Removing of extra characters and converting to a binary system: ";
 	removing_symbols();
-	long finish = clock();
+	finish = clock();
 	cout << (finish - start) / 1000.0 << " s" << endl;
 
 
@@ -367,13 +397,15 @@ int main(int argc, char *argv[])
 	encryption();
 	finish = clock();
 	cout << (finish - start) / 1000.0 << " s" << endl;
+	
 
-	srand(time(NULL));
-	if (text_det("test.txt"))
-		cout << "OPEN" << endl;
-	else
-		cout << "CLOSE" << endl;
-
+	cout << "Find key: ";
+	start = clock();
+	int key = find_key();
+	finish = clock();
+	cout << (finish - start) / 1000.0 << " s" << endl;
+	cout << "Key - " << key << endl;
+	
 	system("pause");
 	return 0;
 }
