@@ -3,6 +3,8 @@
 #include <map> 
 #include <bitset>
 #include <time.h>
+#include <cstring>
+#include <cmath>
 
 using namespace std;
 
@@ -357,6 +359,7 @@ int find_key() {
 		f_key.close();
 		encryption(CRYPT, TEMP_TEXT);
 		find = text_det(TEMP_TEXT);
+        //printf("%d ",key);
 		key++;
 	}
 
