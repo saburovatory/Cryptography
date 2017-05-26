@@ -1,7 +1,9 @@
 set(SOURCES_LIST ${SOURCES_LIST}
      ${CMAKE_CURRENT_LIST_DIR}/Firstone.cpp
+     ${CMAKE_CURRENT_LIST_DIR}/textclassifier.cpp
      PARENT_SCOPE)
 
 set(HEADERS_LIST ${HEADERS_LIST}
+    ${CMAKE_CURRENT_LIST_DIR}/textclassifier.h
      PARENT_SCOPE)
 
