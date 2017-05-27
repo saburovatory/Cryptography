@@ -2,9 +2,49 @@
 
 //На вход подаем примеры открытых и шифрованных текстов
 //На этапе обучения даем еще и правильный ответ через answer (если answer < 0 - обучение завершилось)
-TextClassifier::resultType TextClassifier::Process(const std::string &example, int answer)
+TextClassifier::resultType TextClassifier::Process(const std::string example, int answer)
 {
     TextClassifier::resultType result;
+	result.classNumber = -1;
+	int n1, n2;
+	for (int i = 0; i < example.length() - _wordSize; i++)
+	{
+		std::string sec = example.substr(i, _wordSize);
+		if (answer > 0)
+			switch (answer)
+			{
+			case 1: 
+				_openText[sec]++;
+				break;
+			case 2:
+				_encryptText[sec]++;
+				break;
+			}
+		else
+		{
+			if (_openText.find(sec) == _openText.end())
+				n1 = 0;
+			else
+				n1 = _openText.find(sec)->second;
+			if (_encryptText.find(sec) == _encryptText.end())
+				n2 = 0;
+			else
+				n2 = _encryptText.find(sec)->second;
+			if (n1 > n2) {
+				result.classNumber = 0;
+				result.symbolsToRecognize = i + _wordSize;
+				result.probability = (double)(n1 - n2) / n1;
+				break;
+			}
+			if (n1 < n2) {
+				result.classNumber = 1;
+				result.symbolsToRecognize = i + _wordSize;
+				result.probability = (double)(n2 - n1) / n2;
+				break;
+			}
+		}
+	}
+
     //Здесь совершается полезная работа:
     //1. Выделяем из example подстроку substr длиной _wordSize, начиная с 0 элемента
     //2. Подставляем substr в хранилища _openText и _encryptText и извлекаем из них
