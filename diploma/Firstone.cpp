@@ -5,6 +5,7 @@
 #include <time.h>
 #include <cstring>
 #include <cmath>
+#include "textclassifier.h"
 
 using namespace std;
 
@@ -237,6 +238,32 @@ map<char*, int, cmp_str> load_bigramm() {
 	return result;
 }
 
+bool banned_bigrams(string path) {
+	ifstream f_input;
+
+	char symbol1, symbol2;
+	char *sec;
+
+	map<char*, int, cmp_str> bg = load_bigramm();
+
+	f_input.open(path);
+	while (f_input.get(symbol1) && f_input.get(symbol2))
+	{
+		sec = new char[3];
+		sec[0] = symbol1;
+		sec[1] = symbol2;
+		sec[2] = 0;
+
+		f_input.seekg(-1, ios_base::cur);
+		if (bg.find(sec) == bg.end())
+			return true;
+	}
+
+	f_input.close();
+
+	return false;
+}
+
 double ratio_calc(string path) {
 	ifstream f_input;
 
@@ -301,7 +328,7 @@ double* find_limits(int c, string path) {
 	return new double[2]{ sum, pow(sum2 - pow(sum, 2), 0.5) };
 }
 
-bool text_det(string text_path) {
+bool vald_cryt(string text_path) {
 	double ratio;
 	string TEMP_TEXT = "input3.txt";
 	int symbols = file_symbol_count(text_path);
@@ -358,12 +385,36 @@ int find_key() {
 		f_key << key;
 		f_key.close();
 		encryption(CRYPT, TEMP_TEXT);
-		find = text_det(TEMP_TEXT);
+		if (!banned_bigrams(TEMP_TEXT))
+			find = vald_cryt(TEMP_TEXT);
         //printf("%d ",key);
 		key++;
 	}
 
 	return key - 1;
+}
+
+std::string file_to_text(string path) {
+	std::ifstream file(path);
+	std::string text;
+
+	file.seekg(0, std::ios::end);
+	text.reserve(file.tellg());
+	file.seekg(0, std::ios::beg);
+
+	text.assign((std::istreambuf_iterator<char>(file)),
+		std::istreambuf_iterator<char>());
+
+	return text;
+}
+
+TextClassifier::resultType tree_cryt(string path_open, string path_encrypt) {
+	TextClassifier result;
+
+	result.Process(file_to_text(path_open), 1);
+	result.Process(file_to_text(path_encrypt), 2);
+
+	return result.Process(file_to_text("test.txt"), -1);
 }
 
 int main(int argc, char *argv[])
@@ -402,13 +453,31 @@ int main(int argc, char *argv[])
 	cout << (finish - start) / 1000.0 << " s" << endl;
 	
 
-	cout << "Find key: ";
+	/*cout << "Find key: ";
 	start = clock();
 	int key = find_key();
 	finish = clock();
 	cout << (finish - start) / 1000.0 << " s" << endl;
-	cout << "Key - " << key << endl;
+	cout << "Key - " << key << endl;*/
 	
+	cout << "Text detecting: ";
+	start = clock();
+	TextClassifier::resultType tree = tree_cryt(INPUT, CRYPT);
+	finish = clock();
+	cout << (finish - start) / 1000.0 << " s" << endl;
+	switch (tree.classNumber)
+	{
+	case 0:
+		cout << "Open text with " << tree.probability * 100 << "% probability" << endl;
+		break;
+	case 1:
+		cout << "Encrypt text with " << tree.probability * 100 << "% probability" << endl;
+		break;
+	case -1:
+		cout << "Undefined text" << endl;
+		break;
+	}
+
 	system("pause");
 	return 0;
 }
