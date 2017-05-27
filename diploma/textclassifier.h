@@ -14,7 +14,7 @@ public:
         double probability = 0;
     };
 
-    resultType Process(const std::string &example, int answer);
+    resultType Process(const std::string example, int answer);
 
 private:
 
