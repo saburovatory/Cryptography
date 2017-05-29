@@ -2,15 +2,19 @@
 
 //На вход подаем примеры открытых и шифрованных текстов
 //На этапе обучения даем еще и правильный ответ через answer (если answer < 0 - обучение завершилось)
-TextClassifier::resultType TextClassifier::Process(const std::string example, int answer)
+TextClassifier::resultType TextClassifier::Process(const std::string &example, int answer)
+//Строку лучше по ссылке передавать во избежании лишнего копирования
 {
     TextClassifier::resultType result;
 	result.classNumber = -1;
-	int n1, n2;
+    int n1, n2;//Лучше перенести во внутрь цикла, ведь они нужны только там
 	for (int i = 0; i < example.length() - _wordSize; i++)
 	{
 		std::string sec = example.substr(i, _wordSize);
-		if (answer > 0)
+        //Немного не та логика: даже если идет обучение, мы все равно должны определить,
+        //к какому классу принадлежит текст по результатам предыдущего обучения (для контроля ошибок),
+        //так что здесь if-else не подходит
+        if (answer > 0)
 			switch (answer)
 			{
 			case 1: 
@@ -20,26 +24,28 @@ TextClassifier::resultType TextClassifier::Process(const std::string example, in
 				_encryptText[sec]++;
 				break;
 			}
-		else
+        else//это кусок надо поставить перед if и убрать else
 		{
 			if (_openText.find(sec) == _openText.end())
-				n1 = 0;
+                n1 = 0;
 			else
 				n1 = _openText.find(sec)->second;
 			if (_encryptText.find(sec) == _encryptText.end())
-				n2 = 0;
+                n2 = 0;
 			else
 				n2 = _encryptText.find(sec)->second;
 			if (n1 > n2) {
 				result.classNumber = 0;
 				result.symbolsToRecognize = i + _wordSize;
 				result.probability = (double)(n1 - n2) / n1;
+                //а почему так, а не n1/double(n1+n2)?
 				break;
 			}
 			if (n1 < n2) {
 				result.classNumber = 1;
 				result.symbolsToRecognize = i + _wordSize;
 				result.probability = (double)(n2 - n1) / n2;
+                //аналогично
 				break;
 			}
 		}
