@@ -14,6 +14,8 @@ TextClassifier::resultType TextClassifier::Process(const std::string &example, i
         //Немного не та логика: даже если идет обучение, мы все равно должны определить,
         //к какому классу принадлежит текст по результатам предыдущего обучения (для контроля ошибок),
         //так что здесь if-else не подходит
+        //if надо убрать, оставить в цикле только else ветку, а обучение (т.е. кусок под if)
+        //запихнуть после этого цикла внутри второго похожего цикла, но до return result;
         if (answer > 0)
 			switch (answer)
 			{
@@ -24,7 +26,7 @@ TextClassifier::resultType TextClassifier::Process(const std::string &example, i
 				_encryptText[sec]++;
 				break;
 			}
-        else//это кусок надо поставить перед if и убрать else
+        else
 		{
 			if (_openText.find(sec) == _openText.end())
                 n1 = 0;
