@@ -35,7 +35,10 @@ TextClassifier::resultType TextClassifier::Process(const std::string &example, i
 				break;
 		}
 
-		switch (answer)
+        //Надо все-таки этот switch засунуть в отдельный цикл, тогда и
+        //'if (answer < 0)break;' не нужен (можно сразу break), а то он будет при обучении оценивать текст по последней
+        //подстроке в example, что плохо, т.к. способы оценки при обучении и нормальной работе будут разные.
+        switch (answer)
 		{
 		case 1:
 			_openText[sec]++;
